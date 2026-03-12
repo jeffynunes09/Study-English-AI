@@ -3,13 +3,18 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { BotGreeting } from '@/components/bot-greeting';
 import { DS } from '@/constants/theme';
+import { useAuthStore } from '@/store/auth.store';
 
 const { colors, spacing, radius, shadows } = DS;
 
-// TODO: substituir pelo usuário autenticado via AuthService
-const MOCK_USER = 'Jefferson';
-
 export default function HomeScreen() {
+  const { user, logout } = useAuthStore();
+
+  async function handleLogout() {
+    await logout();
+    router.replace('/(auth)/login');
+  }
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView
@@ -23,20 +28,20 @@ export default function HomeScreen() {
             <Text style={styles.topBarLabel}>Study English AI</Text>
             <Text style={styles.topBarSub}>Your personal tutor</Text>
           </View>
-          <View style={styles.levelBadge}>
-            <Text style={styles.levelBadgeText}>B1</Text>
-          </View>
+          <TouchableOpacity style={styles.levelBadge} onPress={handleLogout}>
+            <Text style={styles.levelBadgeText}>{user?.level?.toUpperCase() ?? '—'}</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Bot greeting */}
         <View style={styles.greetingCard}>
-          <BotGreeting userName={MOCK_USER} />
+          <BotGreeting userName={user?.name ?? 'Student'} />
         </View>
 
         {/* Start practice button */}
         <TouchableOpacity
           activeOpacity={0.85}
-          onPress={() => router.push('/modal')}
+          onPress={() => router.push('/chat')}
         >
           <LinearGradient
             colors={colors.blue.gradient}

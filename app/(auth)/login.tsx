@@ -1,55 +1,60 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  KeyboardAvoidingView,
-  Platform,
+  ScrollView,
   ActivityIndicator,
   Pressable,
+  TouchableOpacity,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { DS } from '@/constants/theme';
+import { useAuthStore } from '@/store/auth.store';
 
 const { colors, spacing, radius, typography, shadows } = DS;
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [emailFocused, setEmailFocused] = useState(false);
-  const [passwordFocused, setPasswordFocused] = useState(false);
+  // useRef: sem re-render ao digitar
+  const emailRef = useRef('');
+  const passwordRef = useRef('');
+
+  // useState só para feedback visual (só muda ao apertar o botão)
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { login } = useAuthStore();
 
   async function handleLogin() {
+    const email = emailRef.current.trim();
+    const password = passwordRef.current;
+
     if (!email || !password) {
       setError('Please fill in all fields.');
       return;
     }
     setError(null);
-    setIsLoading(true);
+    setIsSubmitting(true);
     try {
-      // TODO: integrar com AuthService
-      await new Promise((r) => setTimeout(r, 1000));
+      await login(email, password);
       router.replace('/(tabs)');
-    } catch {
-      setError('Invalid credentials. Please try again.');
+    } catch (err) {
+      setError((err as Error).message ?? 'Invalid credentials. Please try again.');
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   }
 
   return (
     <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
         <View style={styles.header}>
           <View style={styles.logoWrapper}>
             <LinearGradient
@@ -65,31 +70,23 @@ export default function LoginScreen() {
           <Text style={styles.appTagline}>Practice English with your AI tutor</Text>
         </View>
 
-        {/* Card */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Welcome back</Text>
           <Text style={styles.cardSubtitle}>Sign in to continue learning</Text>
 
-          {/* Email */}
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Email</Text>
-            <View style={[styles.inputWrapper, emailFocused && styles.inputFocused]}>
-              <TextInput
-                style={styles.input}
-                placeholder="your@email.com"
-                placeholderTextColor={colors.text.muted}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                onFocus={() => setEmailFocused(true)}
-                onBlur={() => setEmailFocused(false)}
-              />
-            </View>
+            <TextInput
+              style={styles.input}
+              placeholder="your@email.com"
+              placeholderTextColor={colors.text.muted}
+              onChangeText={(t) => { emailRef.current = t; }}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
           </View>
 
-          {/* Password */}
           <View style={styles.inputGroup}>
             <View style={styles.labelRow}>
               <Text style={styles.inputLabel}>Password</Text>
@@ -97,49 +94,41 @@ export default function LoginScreen() {
                 <Text style={styles.forgotLink}>Forgot password?</Text>
               </TouchableOpacity>
             </View>
-            <View style={[styles.inputWrapper, passwordFocused && styles.inputFocused]}>
-              <TextInput
-                style={styles.input}
-                placeholder="••••••••"
-                placeholderTextColor={colors.text.muted}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                onFocus={() => setPasswordFocused(true)}
-                onBlur={() => setPasswordFocused(false)}
-              />
-            </View>
+            <TextInput
+              style={styles.input}
+              placeholder="••••••••"
+              placeholderTextColor={colors.text.muted}
+              onChangeText={(t) => { passwordRef.current = t; }}
+              secureTextEntry
+            />
           </View>
 
-          {error && <Text style={styles.errorText}>{error}</Text>}
+          {error != null && <Text style={styles.errorText}>{error}</Text>}
 
-          {/* Sign In Button */}
           <Pressable
             onPress={handleLogin}
-            disabled={isLoading}
+            disabled={isSubmitting}
             style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1, marginTop: spacing.sm })}
           >
             <LinearGradient
               colors={colors.blue.gradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={[styles.loginBtn, isLoading && { opacity: 0.6 }]}
+              style={[styles.loginBtn, isSubmitting && { opacity: 0.6 }]}
             >
-              {isLoading
+              {isSubmitting
                 ? <ActivityIndicator color="#fff" />
                 : <Text style={styles.loginBtnText}>Sign In</Text>
               }
             </LinearGradient>
           </Pressable>
 
-          {/* Divider */}
           <View style={styles.divider}>
             <View style={styles.dividerLine} />
             <Text style={styles.dividerLabel}>or</Text>
             <View style={styles.dividerLine} />
           </View>
 
-          {/* Register */}
           <TouchableOpacity
             style={styles.registerRow}
             onPress={() => router.push('/(auth)/register')}
@@ -150,7 +139,7 @@ export default function LoginScreen() {
             </Text>
           </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -161,20 +150,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background.primary,
   },
   container: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xl,
   },
-
-  // Header
-  header: {
-    alignItems: 'center',
-    marginBottom: spacing.xl,
-  },
-  logoWrapper: {
-    marginBottom: spacing.md,
-    ...shadows.glow,
-  },
+  header: { alignItems: 'center', marginBottom: spacing.xl },
+  logoWrapper: { marginBottom: spacing.md, ...shadows.glow },
   logoGradient: {
     width: 72,
     height: 72,
@@ -182,20 +164,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  logoEmoji: {
-    fontSize: 32,
-  },
-  appName: {
-    ...typography.h2,
-    color: colors.text.primary,
-    marginBottom: spacing.xs,
-  },
-  appTagline: {
-    ...typography.body,
-    color: colors.text.secondary,
-  },
-
-  // Card
+  logoEmoji: { fontSize: 32 },
+  appName: { ...typography.h2, color: colors.text.primary, marginBottom: spacing.xs },
+  appTagline: { ...typography.body, color: colors.text.secondary },
   card: {
     backgroundColor: colors.card.primary,
     borderRadius: radius.card,
@@ -204,68 +175,33 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     ...shadows.card,
   },
-  cardTitle: {
-    ...typography.h3,
-    color: colors.text.primary,
-    marginBottom: spacing.xs,
-  },
-  cardSubtitle: {
-    ...typography.body,
-    color: colors.text.secondary,
-    marginBottom: spacing.lg,
-  },
-
-  // Inputs
-  inputGroup: {
-    marginBottom: spacing.md,
-  },
+  cardTitle: { ...typography.h3, color: colors.text.primary, marginBottom: spacing.xs },
+  cardSubtitle: { ...typography.body, color: colors.text.secondary, marginBottom: spacing.lg },
+  inputGroup: { marginBottom: spacing.md },
   labelRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.sm,
   },
-  inputLabel: {
-    ...typography.body,
-    color: colors.text.secondary,
-    marginBottom: spacing.sm,
-  },
-  inputWrapper: {
+  inputLabel: { ...typography.body, color: colors.text.secondary, marginBottom: spacing.sm },
+  input: {
     backgroundColor: colors.background.secondary,
     borderRadius: radius.input,
     borderWidth: 1,
     borderColor: colors.border,
     paddingHorizontal: spacing.md,
     height: 48,
-    justifyContent: 'center',
-  },
-  inputFocused: {
-    borderColor: colors.blue.mid,
-    shadowColor: colors.blue.mid,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  input: {
     color: colors.text.primary,
     fontSize: 14,
-    flex: 1,
   },
-  forgotLink: {
-    ...typography.caption,
-    color: colors.blue.mid,
-  },
-
-  // Error
+  forgotLink: { ...typography.caption, color: colors.blue.mid },
   errorText: {
     ...typography.caption,
     color: colors.error,
     textAlign: 'center',
     marginBottom: spacing.sm,
   },
-
-  // Login Button
   loginBtn: {
     height: 48,
     borderRadius: radius.button,
@@ -273,39 +209,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...shadows.glow,
   },
-  loginBtnText: {
-    color: colors.text.primary,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-
-  // Divider
+  loginBtnText: { color: colors.text.primary, fontSize: 16, fontWeight: '600' },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: spacing.lg,
     gap: spacing.md,
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.border,
-  },
-  dividerLabel: {
-    ...typography.caption,
-    color: colors.text.muted,
-  },
-
-  // Register
-  registerRow: {
-    alignItems: 'center',
-  },
-  registerText: {
-    ...typography.body,
-    color: colors.text.secondary,
-  },
-  registerLink: {
-    color: colors.blue.mid,
-    fontWeight: '600',
-  },
+  dividerLine: { flex: 1, height: 1, backgroundColor: colors.border },
+  dividerLabel: { ...typography.caption, color: colors.text.muted },
+  registerRow: { alignItems: 'center' },
+  registerText: { ...typography.body, color: colors.text.secondary },
+  registerLink: { color: colors.blue.mid, fontWeight: '600' },
 });
