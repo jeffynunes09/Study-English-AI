@@ -39,11 +39,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const result = await AuthService.register(name, email, password);
       set({ user: result.user, token: result.token });
-      {}
-    }catch (error) {
-      console.error('Registration error:', error);
-    }
-     finally {
+    } finally {
       set({ isLoading: false });
     }
   },
