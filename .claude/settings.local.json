@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls /mnt/d/Projetos/Study-English-AI/app/\\\\\\(tabs\\\\\\)/ && cat /mnt/d/Projetos/Study-English-AI/app/_layout.tsx)",
+      "Bash(pnpm expo:*)"
+    ]
+  }
+}

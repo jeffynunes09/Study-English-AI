@@ -1,98 +1,238 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
+import { BotGreeting } from '@/components/bot-greeting';
+import { DS } from '@/constants/theme';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const { colors, spacing, radius, shadows } = DS;
+
+// TODO: substituir pelo usuário autenticado via AuthService
+const MOCK_USER = 'Jefferson';
 
 export default function HomeScreen() {
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <SafeAreaView style={styles.safe}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Top bar */}
+        <View style={styles.topBar}>
+          <View>
+            <Text style={styles.topBarLabel}>Study English AI</Text>
+            <Text style={styles.topBarSub}>Your personal tutor</Text>
+          </View>
+          <View style={styles.levelBadge}>
+            <Text style={styles.levelBadgeText}>B1</Text>
+          </View>
+        </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        {/* Bot greeting */}
+        <View style={styles.greetingCard}>
+          <BotGreeting userName={MOCK_USER} />
+        </View>
+
+        {/* Start practice button */}
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => router.push('/modal')}
+        >
+          <LinearGradient
+            colors={colors.blue.gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.startButton}
+          >
+            <Text style={styles.startButtonText}>Start Practicing  →</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        {/* Stats row */}
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>12</Text>
+            <Text style={styles.statLabel}>Sessions</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>84%</Text>
+            <Text style={styles.statLabel}>Accuracy</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>3🔥</Text>
+            <Text style={styles.statLabel}>Streak</Text>
+          </View>
+        </View>
+
+        {/* Recent topics */}
+        <Text style={styles.sectionTitle}>Recent Topics</Text>
+        {RECENT_TOPICS.map((topic) => (
+          <TouchableOpacity key={topic.id} activeOpacity={0.8}>
+            <View style={styles.topicCard}>
+              <View style={styles.topicIconBox}>
+                <Text style={styles.topicIcon}>{topic.icon}</Text>
+              </View>
+              <View style={styles.topicInfo}>
+                <Text style={styles.topicName}>{topic.name}</Text>
+                <Text style={styles.topicDesc}>{topic.desc}</Text>
+              </View>
+              <Text style={styles.topicArrow}>›</Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
+const RECENT_TOPICS = [
+  { id: 1, icon: '💬', name: 'Daily Conversation', desc: 'Greetings & small talk' },
+  { id: 2, icon: '🏢', name: 'Business English', desc: 'Meetings & presentations' },
+  { id: 3, icon: '✈️', name: 'Travel & Tourism', desc: 'Airports & hotels' },
+];
+
 const styles = StyleSheet.create({
-  titleContainer: {
+  safe: {
+    flex: 1,
+    backgroundColor: colors.background.primary,
+  },
+  scroll: {
+    flex: 1,
+  },
+  content: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xxl,
+    gap: spacing.md,
+  },
+
+  // Top bar
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  topBarLabel: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: colors.text.primary,
+  },
+  topBarSub: {
+    fontSize: 12,
+    color: colors.text.muted,
+    marginTop: 2,
+  },
+  levelBadge: {
+    backgroundColor: colors.card.secondary,
+    borderRadius: radius.button,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.blue.mid,
+  },
+  levelBadgeText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.blue.mid,
+  },
+
+  // Greeting card
+  greetingCard: {
+    backgroundColor: colors.card.primary,
+    borderRadius: radius.card,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadows.card,
+  },
+
+  // Start button
+  startButton: {
+    height: 52,
+    borderRadius: radius.button,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadows.glow,
+  },
+  startButtonText: {
+    color: colors.text.primary,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  // Stats
+  statsRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: colors.card.primary,
+    borderRadius: radius.card,
+    padding: spacing.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadows.card,
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text.primary,
+  },
+  statLabel: {
+    fontSize: 11,
+    color: colors.text.muted,
+    marginTop: 2,
+  },
+
+  // Section title
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text.primary,
+    marginTop: spacing.xs,
+  },
+
+  // Topic cards
+  topicCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    backgroundColor: colors.card.primary,
+    borderRadius: radius.card,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: spacing.md,
+    ...shadows.card,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  topicIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.icon,
+    backgroundColor: colors.card.secondary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  topicIcon: {
+    fontSize: 22,
+  },
+  topicInfo: {
+    flex: 1,
+  },
+  topicName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text.primary,
+  },
+  topicDesc: {
+    fontSize: 12,
+    color: colors.text.muted,
+    marginTop: 2,
+  },
+  topicArrow: {
+    fontSize: 22,
+    color: colors.text.muted,
   },
 });
